@@ -1,21 +1,14 @@
-#!/usr/bin/env python
-# coding: utf-8
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jul  3 19:29:21 2019
 
-# In[1]:
-
-
-# Run this in Python once, it should take effect permanently
-from notebook.services.config import ConfigManager
-c = ConfigManager()
-c.update('notebook', {"CodeCell": {"cm_config": {"autoCloseBrackets": False}}})
-
-
-# In[2]:
-
+@author: Rob
+"""
 
 #Imports
-import os
-from os import path
+#import os
+#from os import path
+
 import functools
 import operator
 
@@ -24,12 +17,12 @@ from collections import Counter
 import glob
 
 # Imports url
-import urllib.request
-from bs4 import BeautifulSoup
+#import urllib.request
+#from bs4 import BeautifulSoup
 import html2text
 
 #Wordcloud
-from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
+from wordcloud import WordCloud, STOPWORDS#, ImageColorGenerator
 from PIL import Image
 import numpy as np
 
@@ -39,20 +32,12 @@ import matplotlib.pyplot as plt
 #Pandas
 import pandas as pd
 
-
-# ## Read in the html page of the Friends episode transcripts
-
-# In[3]:
-
-
-path = './season/'
-filename = '0101.html'
-
 def open_html(filename_html):
     '''
     Import html screenplay file.
     
     Parameters:
+
     ----------
     filename_html - String. File name.
     
@@ -67,21 +52,6 @@ def open_html(filename_html):
     f = open(filename, 'r').read()
     #print(f)
     return f
-
-#filename = './season/0101.html'
-#f = open(filename, "r").read()
-#print(f)
-
-
-# In[4]:
-
-
-f = open_html(filename)
-
-
-# ## Get entire season
-
-# In[5]:
 
 
 def all_episodes(path, season):
@@ -108,24 +78,6 @@ def all_episodes(path, season):
     return all_episodes_in_a_season
 
 
-# In[6]:
-
-
-first_season = '01*.html'
-first_season_episodes = all_episodes(path, first_season)
-
-
-# In[7]:
-
-
-print(len(first_season_episodes))
-
-
-# ## Convert html into readable text using html2text
-
-# In[8]:
-
-
 def convert_html_to_text(file):
     '''
     Convert html file into text file. 
@@ -142,20 +94,9 @@ def convert_html_to_text(file):
     h = html2text.HTML2Text()
     # Ignore converting links from HTML
     h.ignore_links = True
-    print(h.handle(file))
+    #print(h.handle(file))
     episode = h.handle(file)
     return episode
-
-
-# In[9]:
-
-
-first_episode = convert_html_to_text(f)
-
-
-# ## Get txt for all episodes in a season
-
-# In[12]:
 
 
 def convert_season_html_to_text(all_episodes_in_a_season):
@@ -182,24 +123,6 @@ def convert_season_html_to_text(all_episodes_in_a_season):
         all_episodes_in_a_season_txt.append(all_episodes)
     return all_episodes_in_a_season_txt
 
-
-# In[38]:
-
-
-all_episodes_in_a_season_txt = convert_season_html_to_text(first_season_episodes)
-
-
-# In[73]:
-
-
-print(len(all_episodes_in_a_season_txt))
-
-print(all_episodes_in_a_season_txt[18])
-
-
-# # WordCloud
-
-# In[15]:
 
 
 def add_stopwords_to_wordcloud(stop_friends_on_off):
@@ -236,29 +159,6 @@ def add_stopwords_to_wordcloud(stop_friends_on_off):
     return stopwords
 
 
-# In[17]:
-
-
-stopwords = add_stopwords_to_wordcloud(True);
-
-
-# In[18]:
-
-
-max_font_size = 100
-min_font_size = 20
-bck_color = 'white'
-#width = 500
-#height = 300
-width=1600
-height=800
-colourmap = plt.cm.cividis_r
-relative_scaling = 1 # relative scaling sets how to adjust the font sizes based on frequency
-                    # relative_scaling == 1.0 means frequency dictates font-size -> Hides low-frequency words
-                    # relative_scaling == 0.0 means rank dictates the relative font-size -> hides how frequently a word might appear
-
-collocations = False # if true, it will group phrases; if false it will take single words
-
 def generate_wordcloud_bilinear(episode, max_font_size ):
     '''
     Make a wordcloud based on the episode. Use bilinear interpolation and max font size.
@@ -284,32 +184,25 @@ def generate_wordcloud_bilinear(episode, max_font_size ):
     plt.axis("off")
     plt.show()
 
-    # The pil way (if you don't have matplotlib)
-    # image = wordcloud.to_image()
-    # image.show()
 
+def generate_wordcloud_all_in_season(all_episodes_in_a_season_txt):
+    """
+    Generate wordclouds for each episode in a season.
+    
+    Parameters:
+    -----------
+    all_episodes_in_a_season_txt - A list of all episodes in a season as txt file, converted from html.
+    
+    Return:
+    -------
+    Wordcloud figures for each episode
+    
+    """
+    
+    for each_ep in np.arange(0, len(all_episodes_in_a_season_txt), 1):
+        generate_wordcloud_bilinear(all_episodes_in_a_season_txt[each_ep], max_font_size)
 
-# In[19]:
-
-
-generate_wordcloud_bilinear(first_episode, max_font_size)
-
-
-# ## WordCloud for each episode in a season
-
-# In[21]:
-
-
-#for each_ep in np.arange(0, len(all_episodes_in_a_season_txt), 1):
-#    generate_wordcloud_bilinear(all_episodes_in_a_season_txt[each_ep], max_font_size)
-
-
-# ## WordCloud with a mask
-
-# In[22]:
-
-
-mask_image = 'friends_couch.jpg'
+    return
 
 def generate_wordcloud_with_mask(mask_image, episode):
     '''
@@ -331,8 +224,6 @@ def generate_wordcloud_with_mask(mask_image, episode):
                stopwords=stopwords, contour_width=2, min_font_size=min_font_size, contour_color='grey', 
                   colormap = colourmap).generate(episode)
 
-    # store to file
-    wc.to_file("F.png")
     # show
     plt.figure(figsize=(20,20))
     plt.imshow(wc, interpolation='bilinear')
@@ -341,24 +232,6 @@ def generate_wordcloud_with_mask(mask_image, episode):
     plt.show()
     return
 
-
-# In[23]:
-
-
-generate_wordcloud_with_mask(mask_image, first_episode)
-
-
-# # A Friend lines
-
-# In[93]:
-
-
-#friend_name = '**Monica:**'
-#friend_name = '**Rachel:**'
-#friend_name = '**Ross:**'
-#friend_name = '**Joey:**'
-friend_name = '**Phoebe:**'
-#friend_name = '**Chandler:**'
 
 def get_friend_line(friend_name, episode):
     '''
@@ -387,6 +260,20 @@ def get_friend_line(friend_name, episode):
         with open('test_friend.txt', 'w', encoding='utf-8') as f2:
             lines = f1.readlines()
             for i, line in enumerate(lines):
+                
+                if line.startswith('Phoebe**:'):
+                    f2.write(line)
+                    
+                    if not lines[i+1].startswith('Phoebe**:'):
+                        f2.write(lines[i+1])
+                        
+                        if not lines[i+2].startswith('Phoebe**:'):
+                            f2.write(lines[i+2])
+                            
+                            if not lines[i+3].startswith('Phoebe**:'):
+                                f2.write(lines[i+3])
+            
+                                    
                 # Add lines that starts with searcquery
                 if line.startswith(searchquery):
                     f2.write(line)
@@ -420,218 +307,375 @@ def get_friend_line(friend_name, episode):
     return one_friend, one_friend_clear
 
 
-# In[ ]:
-
-
-
-
-
-# In[94]:
-
-
-phoebe, phoebe_clear = get_friend_line(friend_name, first_episode)
-#print(phoebe_clear)
-
-
-# In[95]:
-
-
-phoebe_s = []
-phoebe_clear_s = []
-
-for each_ep in np.arange(0, len(all_episodes_in_a_season_txt), 1):
-    phoebe_tmp, phoebe_clear_tmp = get_friend_line(friend_name, all_episodes_in_a_season_txt[each_ep])
+def get_friend_line_each_ep_in_season(friend_name, all_episodes_in_a_season_txt):
+    """
+    Get the Friend lines from each episode in a season.
     
-    phoebe_s.append(phoebe_tmp)
-    phoebe_clear_s.append(phoebe_clear_tmp)
+    Parameters:
+    ----------
+    friend_n - Modified string of a friend nema; e.g. if you want Monica, you type: '**Monica:**'
+    all_episodes_in_a_season_txt - A list of all episodes in a season as txt file, converted from html.
 
+    Return:
+    ------
+    friend_s - Lines of the selected friend
+    friend_clear_s - Lines of the selected friend, cleared.
+    
+    """
+    friend_s = []
+    friend_clear_s = []
 
-# In[101]:
-
-
-# DIFFERENT FORMATING FOR THE EPISODE
-print(phoebe_clear_s[15]) 
-
-
-# ## WordCloud
-
-# In[54]:
-
-
-generate_wordcloud_bilinear(phoebe_clear, max_font_size)
+    for each_ep in np.arange(0, len(all_episodes_in_a_season_txt), 1):
+        friend_tmp, friend_clear_tmp = get_friend_line(friend_name, all_episodes_in_a_season_txt[each_ep])
+    
+        friend_s.append(friend_tmp)
+        friend_clear_s.append(friend_clear_tmp)
+    #print(friend_clear_s)
+    return friend_s, friend_clear_s
 
 
 # ## WordCloud per season per Friend
 
-# In[99]:
-
-
-for each_ep in np.arange(0, len(phoebe_clear_s), 1):
-    try:
-        generate_wordcloud_bilinear(phoebe_clear_s[each_ep],  max_font_size)
+def generate_wordcloud_friend_in_season(friend_clear_s):
+    """
+    Generate a wordloud of a Friend for each episode in a season.
     
-    # I'm raising value error because s01e16 is formated differently, thus text for a friend is not detected at the moment
-    except ValueError:
-        pass
-        print('There is an error in episode {0}'.format(each_ep+1))
+    Parameter:
+    ----------
+    friend_clear_s - Lines of the selected friend, cleared.
+
+    Return:
+    -------
+    WordClouds.
     
-
-
-# ## Count words and plot frequency
-
-# In[201]:
-
-
-
-# If I want entire season I need to remove nested list
-#phoebe_clear_season = functools.reduce(operator.concat, phoebe_clear_s)
-
-#print(flat_list)
-
-words = []
-
-for i in np.arange(0, len(phoebe_clear_s), 1):
-# Use Counter to count the words; It will be dictionary
-    words_count = Counter(map(str.lower, phoebe_clear_s[i].split()))
-    words.append(words_count)
-
-dataframe = []
-for i in np.arange(0, len(words), 1):
+    """
+    for each_ep in np.arange(0, len(friend_clear_s), 1):
+        try:
+            generate_wordcloud_bilinear(friend_clear_s[each_ep],  max_font_size)
     
-    # Convert counted words into pandas dataframe
-    df = pd.DataFrame.from_dict(words[i], orient='index').reset_index()
-    dataframe.append(df)
+        # I'm raising value error because s01e16 is formated differently, thus text for a friend is not detected at the moment
+        except ValueError:
+            pass
+            print('There is an error in episode {0}'.format(each_ep+1))
+    return
 
+
+def count_friend_words(friend_clear_s):
+    """
+    Get the words and count them for a friend.
     
-print(dataframe)
+    Parameters:
+    ----------
+    friend_clear_s - Lines of the selected friend, cleared.
 
-
-# In[259]:
-
-
-i_count = []
-
-for i in np.arange(0, len(dataframe), 1):
-
-    try:
+    Return:
+    -------
     
-        letter_i = dataframe[i][0] [dataframe[i]['index']=='i']
-        i_count.append(letter_i.values)
+    words - List of strings. Unique words.
+    dataframe - Pandas Dataframe of words and their counts.
+    
+    """
 
-    except KeyError:
-        pass
-        print('No value at position {0}'.format(i+1))
+    words = []
 
+    for i in np.arange(0, len(friend_clear_s), 1):
+        # Use Counter to count the words; It will be dictionary
+        words_count = Counter(map(str.lower, friend_clear_s[i].split()))
+        words.append(words_count)
 
-# In[288]:
+    dataframe = []
+    for i in np.arange(0, len(words), 1):
+    
+        # Convert counted words into pandas dataframe
+        df = pd.DataFrame.from_dict(words[i], orient='index').reset_index()
+        dataframe.append(df)
+    
+    return words, dataframe
 
+def selfish_friend_words(dataframe):
+    """
+    Count selfish words, such as: I, Im, Me
+    
+    Parameters:
+    -----------
+    dataframe - Pandas Dataframe of words and their counts.
 
-print(i_count)
-print(len(i_count))
+    Return:
+    -------
+    
+    i_count - List of integers. Word counts.
+    im_count - List of integers. Word counts.
+    my_count - List of integers. Word counts.
+    
+    """
+    i_count = []
+    im_count = []
+    my_count = []
 
+    for i in np.arange(0, len(dataframe), 1):
 
-# In[ ]:
-
-
-
-
-
-# In[138]:
-
-
-
-# If I want entire season I need to remove nested list
-phoebe_clear_season = functools.reduce(operator.concat, phoebe_clear_s)
-
-#print(flat_list)
-
-# Use Counter to count the words; It will be dictionary
-words_count = Counter(map(str.lower, phoebe_clear_season.split()))
-
-# Convert counted words into pandas dataframe
-df = pd.DataFrame.from_dict(words_count, orient='index').reset_index()
-
-# Rename colums
-df = df.rename(columns={'index':'word', 0:'count'})
-
-# Sort by the 'count' values, highest first
-df = df.sort_values(['count'], ascending=[False])
-
-df.head()
-
-
-# In[139]:
-
-
-print(np.asarray(df['word']))
-
-
-# In[140]:
-
-
-first_x_words = 15
-
-fig, ax = plt.subplots(1, figsize=(15,10))
-
-#plt.figure(figsize=(10,10))
-plt.bar(df['word'][0:first_x_words], df['count'][0:first_x_words], color='lightgrey', edgecolor='k')
-
-ax.tick_params(axis='both', which='major', labelsize=16)
-
-plt.xlabel('Words', fontsize=24)
-plt.ylabel('Count', fontsize=22)
-
-
-for bar in ax.patches:
-    height = bar.get_height()
-    ax.text(bar.get_x()+bar.get_width()/2.,
-            height + 0.2,
-            '{:1.2f}'.format(height),
-            ha="center",fontsize=18) 
-
-
-# # Count 'I' per season per person
-
-# In[353]:
-
-
-A = np.arange(1, len(i_count)+1, 1)
-i_values = []
-
-for i in np.arange(0, len(i_count), 1):
-    try:
-        value = i_count[i][0]
-        i_values.append(value)
-    except IndexError:
-        i_values.append(0)
+        try:
+    
+            letter_i = dataframe[i][0] [dataframe[i]['index']=='i']
+            i_count.append(letter_i.values)
         
-fig, ax = plt.subplots(1, figsize=(15,10))
+            letter_im = dataframe[i][0] [dataframe[i]['index']=='i\'m']
+            im_count.append(letter_im.values)
+        
+            letter_my = dataframe[i][0] [dataframe[i]['index']=='my']
+            my_count.append(letter_my.values)
 
-#plt.figure(figsize=(10,10))
-plt.bar(A, i_values, color='lightgrey', edgecolor='k', label='Phoebe')
+        except KeyError:
+            pass
+            print('No value at position {0}'.format(i+1))
+            
+    return i_count, im_count, my_count
 
-ax.tick_params(axis='both', which='major', labelsize=16)
+def make_word_dataframe(friend_clear_s):
+    """
+    Make a dataframe from which I can count words.
+    
+    Parameters:
+    -----------
+    friend_clear_s - Lines of the selected friend, cleared.
 
-plt.xlabel('Episode', fontsize=24)
-plt.ylabel('\' I \' [counts]', fontsize=22)
-plt.legend(loc=0, fontsize=20)
+    Return:
+    ------
+    df - Panadas dataframe.
+    
+    """
+    
+    # If I want eason I need to remove nested list
+    friend_clear_season = functools.reduce(operator.concat, friend_clear_s)
 
-for bar in ax.patches:
-    height = bar.get_height()
-    ax.text(bar.get_x()+bar.get_width()/2.,
-            height + 0.2,
-            '{}'.format(height),
-            ha="center",fontsize=18)
+    # Use Counter to count the words; It will be dictionary
+    words_count = Counter(map(str.lower, friend_clear_season.split()))
+
+    # Convert counted words into pandas dataframe
+    df = pd.DataFrame.from_dict(words_count, orient='index').reset_index()
+
+    # Rename colums
+    df = df.rename(columns={'index':'word', 0:'count'})
+
+    # Sort by the 'count' values, highest first
+    df = df.sort_values(['count'], ascending=[False])
+
+    df.head()
+
+    return df
 
 
-# In[330]:
+def plot_top_repeating_words(first_x_words, df):
+
+    fig, ax = plt.subplots(1, figsize=(15,10))
+
+    #plt.figure(figsize=(10,10))
+    plt.bar(df['word'][0:first_x_words], df['count'][0:first_x_words], color='lightgrey', edgecolor='k')
+
+    ax.tick_params(axis='both', which='major', labelsize=16)
+
+    plt.xlabel('Words', fontsize=24)
+    plt.ylabel('Count', fontsize=22)
 
 
-i_count[22][0]
+    for bar in ax.patches:
+        height = bar.get_height()
+        ax.text(bar.get_x()+bar.get_width()/2.,
+                height + 0.2,
+                '{:1.2f}'.format(height),
+                ha="center",fontsize=18) 
+
+def selfish_friend_words_values(i_count, im_count, my_count):
+    """
+    Count selfish words, such as: I, Im, Me
+    
+    Parameters:
+    -----------
+    i_count - List of integers. Word counts.
+    im_count - List of integers. Word counts.
+    my_count - List of integers. Word counts.
+    
+    Return:
+    -------
+    i_values - List of integers. Word counts.
+    im_values - List of integers. Word counts.
+    my_values - List of integers. Word counts.
+    sum_values - List of integers. Sum of all defined selfish words.
+    
+    """
+    
+    
+    i_values = []
+    im_values = []
+    my_values = []
+
+    for i in np.arange(0, len(i_count), 1):
+        try:
+            value = i_count[i][0]
+            i_values.append(value)
+        except IndexError:
+                i_values.append(0)
+        
+        for i in np.arange(0, len(im_count), 1):
+            try:
+                value = im_count[i][0]
+                im_values.append(value)
+            except IndexError:
+                    im_values.append(0)
+        
+        for i in np.arange(0, len(my_count), 1):
+            try:
+                value = my_count[i][0]
+                my_values.append(value)
+            except IndexError:
+                    my_values.append(0)        
+        
+        # Sum all individual words
+        sum_values = [x + y + z for x, y, z in zip(i_values, im_values, my_values)]
+
+    return i_values, im_values, my_values, sum_values
 
 
-# In[ ]:
+
+def make_plot_selfish_words(i_values, im_values, my_values, sum_values):
+    """
+    Make a bar plot of the selfish words throughout the season.
+    
+    Parameters:
+    -----------
+    i_values - List of integers. Word counts.
+    im_values - List of integers. Word counts.
+    my_values - List of integers. Word counts.
+    sum_values - List of integers. Sum of all defined selfish words.
+    
+    Return:
+    -------
+    Plot.
+    
+    """
+    
+    
+    A = np.arange(1, len(i_count)+1, 1)
+
+    fig, ax = plt.subplots(1, figsize=(15,10))
+
+
+    #plt.bar(A, i_values, color='grey', edgecolor='k', label='I', alpha=1)
+    #plt.bar(A, im_values, color='lightgrey', edgecolor='k', label='I\'m', alpha = 0.5)
+    #plt.bar(A, my_values, color='white', edgecolor='k', label='My', alpha = 0.8)
+
+    plt.bar(A, sum_values, color='lightgrey', edgecolor='k', label='I, I\'m, My [Phoebe]', alpha = 1)
+
+
+    ax.tick_params(axis='both', which='major', labelsize=16)
+
+    plt.xlabel('Episode', fontsize=24)
+    plt.ylabel('Counts', fontsize=22)
+    plt.legend(loc=0, fontsize=20)
+
+    for bar in ax.patches:
+        height = bar.get_height()
+        ax.text(bar.get_x()+bar.get_width()/2.,
+                height + 0.2,
+                '{}'.format(height),
+                ha="center",fontsize=18)
+    return
+
+##################################################
+########### Handle the functions #################
+##################################################
 
 
 
+if __name__ == "__main__":
 
+    #Output directory for saving plots/data
+
+    outdir = './output/'
+    
+    path = './season/'
+    filename = '0101.html'
+
+
+    # Open html page
+    f = open_html(filename)
+    
+    
+    first_season = '01*.html'
+    first_season_episodes = all_episodes(path, first_season)
+    print(len(first_season_episodes))
+    
+    #Convert html into readable text using html2text
+    first_episode = convert_html_to_text(f)
+
+    # Get txt for all episodes in a season
+    all_episodes_in_a_season_txt = convert_season_html_to_text(first_season_episodes)
+
+    print(len(all_episodes_in_a_season_txt))
+    #print(all_episodes_in_a_season_txt[18])
+    
+    # WordCloud
+    # Create stopwords
+    stopwords = add_stopwords_to_wordcloud(True);
+    
+    # Define parameters for wordcloud
+    max_font_size = 100
+    min_font_size = 20
+    bck_color = 'white'
+    #width = 500
+    #height = 300
+    width=1600
+    height=800
+    colourmap = plt.cm.cividis_r
+    relative_scaling = 1 # relative scaling sets how to adjust the font sizes based on frequency
+                    # relative_scaling == 1.0 means frequency dictates font-size -> Hides low-frequency words
+                    # relative_scaling == 0.0 means rank dictates the relative font-size -> hides how frequently a word might appear
+
+    collocations = False # if true, it will group phrases; if false it will take single words
+
+    # Wordcloud for episode
+    #generate_wordcloud_bilinear(first_episode, max_font_size)
+
+    # Wordcloud for each episode in a season
+    #generate_wordcloud_all_in_season(all_episodes_in_a_season_txt)
+    
+    # WordCloud with a mask
+    mask_image = 'friends_couch.jpg'
+    #generate_wordcloud_with_mask(mask_image, first_episode)
+    
+    
+    # A Friend lines
+
+    #friend_name = '**Monica:**'
+    #friend_name = '**Rachel:**'
+    #friend_name = '**Ross:**'
+    #friend_name = '**Joey:**'
+    friend_name = '**Phoebe:**'
+    #friend_name = '**Chandler:**'
+    
+    # Get a Friend line
+    friend, friend_clear = get_friend_line(friend_name, first_episode)
+
+    # Get a Friend lines for every episode in a season
+    friend_s, friend_clear_s = get_friend_line_each_ep_in_season(friend_name, all_episodes_in_a_season_txt)
+
+    # DIFFERENT FORMATING FOR THE EPISODE
+    #print(friend_clear_s[15])
+    
+    # WordCloud
+    #generate_wordcloud_bilinear(friend_clear_s[0], max_font_size)
+    
+    #generate_wordcloud_friend_in_season(friend_clear_s)
+
+    words, dataframe = count_friend_words(friend_clear_s)
+
+    i_count, im_count, my_count = selfish_friend_words(dataframe)
+
+    df = make_word_dataframe(friend_clear_s)
+
+    first_x_words = 15
+    plot_top_repeating_words(first_x_words, df)
+
+    i_values, im_values, my_values, sum_values = selfish_friend_words_values(i_count, im_count, my_count)
+
+    make_plot_selfish_words(i_values, im_values, my_values, sum_values)
