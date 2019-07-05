@@ -94,8 +94,11 @@ def convert_html_to_text(file):
     h = html2text.HTML2Text()
     # Ignore converting links from HTML
     h.ignore_links = True
+    h.body_width = 0
+
     #print(h.handle(file))
     episode = h.handle(file)
+    #print(episode)
     return episode
 
 
@@ -115,6 +118,7 @@ def convert_season_html_to_text(all_episodes_in_a_season):
     h = html2text.HTML2Text()
     # Ignore converting links from HTML
     h.ignore_links = True
+    h.body_width = 0
     #print(h.handle(file))
     
     all_episodes_in_a_season_txt = []
@@ -141,7 +145,7 @@ def add_stopwords_to_wordcloud(stop_friends_on_off):
     stopwords = set(STOPWORDS) #set(STOPWORDS) for default exclusion
     
     stopwords.add("Scene")
-    print(stopwords)
+    #print(stopwords)
     # Need to add stopwords for Frinds if I don't want to show their names
     stop_friends = stop_friends_on_off
 
@@ -259,47 +263,28 @@ def get_friend_line(friend_name, episode):
     with open('testfile.txt', encoding='utf-8') as f1:
         with open('test_friend.txt', 'w', encoding='utf-8') as f2:
             lines = f1.readlines()
+
             for i, line in enumerate(lines):
-                
-                if line.startswith('Phoebe**:'):
-                    f2.write(line)
-                    
-                    if not lines[i+1].startswith('Phoebe**:'):
-                        f2.write(lines[i+1])
-                        
-                        if not lines[i+2].startswith('Phoebe**:'):
-                            f2.write(lines[i+2])
-                            
-                            if not lines[i+3].startswith('Phoebe**:'):
-                                f2.write(lines[i+3])
-            
-                                    
+
                 # Add lines that starts with searcquery
                 if line.startswith(searchquery):
-                    f2.write(line)
+                    f2.write(lines[i])
+
+                #Sometimes there are multiple lines, but not all starts with searchquer
+                #Add them to the list if they dont start with ** because that would mean different Friend is speaking                       
+                # Adjust: remove first 2 characters and rearange last 3
+                if line.startswith(searchquery[2:-3]+'**:'): #'Name**:'):
+                    f2.write(lines[i])
                     
-                    #Sometimes there are multiple lines, but not all starts with searchquer
-                    #Add them to the list if they dont start with ** because that would mean different Friend is speaking                       
-                    if not lines[i+1].startswith('**'):
-                        f2.write(lines[i+1])
+                # Ross has different formating in ep 16,17, thus this condition:
+                if line.startswith(searchquery[0:-3]+'** :'):
+                    f2.write(lines[i])
                     
-                        # Need to check several levels whether it is true or not
-                        if not lines[i+2].startswith('**'):
-                            f2.write(lines[i+2])
-                            
-                            if not lines[i+3].startswith('**'):
-                                f2.write(lines[i+3])
-                                
-                                if not lines[i+4].startswith('**'):
-                                    f2.write(lines[i+4])
-                                    
-                                    if not lines[i+5].startswith('**'):
-                                        f2.write(lines[i+5])
-                                        
+
                 
     file = open('test_friend.txt', 'r',encoding='utf-8') 
     one_friend = file.read();
-    
+
     # Remove text within [] and () brackets. These lines are scene description.
     one_friend_tmp = re.sub( "\[[^\]]*\]", "", one_friend) # Removes []
     one_friend_clear = re.sub('\([^)]*\)', "",one_friend_tmp) # Removes ()
@@ -427,11 +412,11 @@ def selfish_friend_words(dataframe):
 
         except KeyError:
             pass
-            print('No value at position {0}'.format(i+1))
+            print('No words in episode {0}'.format(i+1))
             
     return i_count, im_count, my_count
 
-def make_word_dataframe(friend_clear_s):
+def make_word_dataframe(friend_clear_s, friend_name):
     """
     Make a dataframe from which I can count words.
     
@@ -460,7 +445,9 @@ def make_word_dataframe(friend_clear_s):
     # Sort by the 'count' values, highest first
     df = df.sort_values(['count'], ascending=[False])
 
-    df.head()
+    #df.head()
+    
+    #df.to_csv('./DataFrames/'+str(friend_name[2:-3]), sep='\t', encoding='utf-8')    
 
     return df
 
@@ -514,30 +501,30 @@ def selfish_friend_words_values(i_count, im_count, my_count):
             value = i_count[i][0]
             i_values.append(value)
         except IndexError:
-                i_values.append(0)
+            i_values.append(0)
         
-        for i in np.arange(0, len(im_count), 1):
-            try:
-                value = im_count[i][0]
-                im_values.append(value)
-            except IndexError:
-                    im_values.append(0)
+    for i in np.arange(0, len(im_count), 1):
+        try:
+            value = im_count[i][0]
+            im_values.append(value)
+        except IndexError:
+            im_values.append(0)
         
-        for i in np.arange(0, len(my_count), 1):
-            try:
-                value = my_count[i][0]
-                my_values.append(value)
-            except IndexError:
-                    my_values.append(0)        
+    for i in np.arange(0, len(my_count), 1):
+        try:
+            value = my_count[i][0]
+            my_values.append(value)
+        except IndexError:
+            my_values.append(0)        
         
         # Sum all individual words
-        sum_values = [x + y + z for x, y, z in zip(i_values, im_values, my_values)]
+    sum_values = [x + y + z for x, y, z in zip(i_values, im_values, my_values)]
 
     return i_values, im_values, my_values, sum_values
 
 
 
-def make_plot_selfish_words(i_values, im_values, my_values, sum_values):
+def make_plot_selfish_words(i_values, im_values, my_values, sum_values, friend_name):
     """
     Make a bar plot of the selfish words throughout the season.
     
@@ -547,6 +534,8 @@ def make_plot_selfish_words(i_values, im_values, my_values, sum_values):
     im_values - List of integers. Word counts.
     my_values - List of integers. Word counts.
     sum_values - List of integers. Sum of all defined selfish words.
+    friend_name - Modified string of a friend nema; e.g. if you want Monica, you type: '**Monica:**'
+
     
     Return:
     -------
@@ -564,7 +553,7 @@ def make_plot_selfish_words(i_values, im_values, my_values, sum_values):
     #plt.bar(A, im_values, color='lightgrey', edgecolor='k', label='I\'m', alpha = 0.5)
     #plt.bar(A, my_values, color='white', edgecolor='k', label='My', alpha = 0.8)
 
-    plt.bar(A, sum_values, color='lightgrey', edgecolor='k', label='I, I\'m, My [Phoebe]', alpha = 1)
+    plt.bar(A, sum_values, color='lightgrey', edgecolor='k', label='I, I\'m, My [{0}]'.format(friend_name[2:-3]), alpha = 1)
 
 
     ax.tick_params(axis='both', which='major', labelsize=16)
@@ -584,7 +573,10 @@ def make_plot_selfish_words(i_values, im_values, my_values, sum_values):
 ##################################################
 ########### Handle the functions #################
 ##################################################
-
+outdir = './output/'
+    
+path = './season/'
+filename = '0117.html'
 
 
 if __name__ == "__main__":
@@ -594,7 +586,7 @@ if __name__ == "__main__":
     outdir = './output/'
     
     path = './season/'
-    filename = '0101.html'
+    filename = '0117.html'
 
 
     # Open html page
@@ -607,7 +599,7 @@ if __name__ == "__main__":
     
     #Convert html into readable text using html2text
     first_episode = convert_html_to_text(f)
-
+    #print(first_episode)
     # Get txt for all episodes in a season
     all_episodes_in_a_season_txt = convert_season_html_to_text(first_season_episodes)
 
@@ -645,37 +637,41 @@ if __name__ == "__main__":
     
     
     # A Friend lines
-
+    list_of_friends = ['**Monica:**', '**Rachel:**', '**Ross:**', '**Joey:**', '**Phoebe:**', '**Chandler:**']
+    
+    for i, friend in enumerate(list_of_friends):
+        friend_name = friend
+    
     #friend_name = '**Monica:**'
     #friend_name = '**Rachel:**'
     #friend_name = '**Ross:**'
     #friend_name = '**Joey:**'
-    friend_name = '**Phoebe:**'
+    #friend_name = '**Phoebe:**'
     #friend_name = '**Chandler:**'
     
     # Get a Friend line
-    friend, friend_clear = get_friend_line(friend_name, first_episode)
-
+        friend, friend_clear = get_friend_line(friend_name, first_episode)
+    #print(friend_clear)
     # Get a Friend lines for every episode in a season
-    friend_s, friend_clear_s = get_friend_line_each_ep_in_season(friend_name, all_episodes_in_a_season_txt)
+        friend_s, friend_clear_s = get_friend_line_each_ep_in_season(friend_name, all_episodes_in_a_season_txt)
 
     # DIFFERENT FORMATING FOR THE EPISODE
-    #print(friend_clear_s[15])
+    #print(friend_s[15])
     
     # WordCloud
     #generate_wordcloud_bilinear(friend_clear_s[0], max_font_size)
     
     #generate_wordcloud_friend_in_season(friend_clear_s)
 
-    words, dataframe = count_friend_words(friend_clear_s)
+        words, dataframe = count_friend_words(friend_clear_s)
 
-    i_count, im_count, my_count = selfish_friend_words(dataframe)
+        i_count, im_count, my_count = selfish_friend_words(dataframe)
 
-    df = make_word_dataframe(friend_clear_s)
+        df = make_word_dataframe(friend_clear_s, friend_name)
 
-    first_x_words = 15
-    plot_top_repeating_words(first_x_words, df)
+        first_x_words = 15
+    #plot_top_repeating_words(first_x_words, df)
 
-    i_values, im_values, my_values, sum_values = selfish_friend_words_values(i_count, im_count, my_count)
+        i_values, im_values, my_values, sum_values = selfish_friend_words_values(i_count, im_count, my_count)
 
-    make_plot_selfish_words(i_values, im_values, my_values, sum_values)
+        make_plot_selfish_words(i_values, im_values, my_values, sum_values, friend_name)
