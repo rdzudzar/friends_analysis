@@ -128,115 +128,6 @@ def convert_season_html_to_text(all_episodes_in_a_season):
     return all_episodes_in_a_season_txt
 
 
-
-def add_stopwords_to_wordcloud(stop_friends_on_off):
-    '''
-    Set on and off stopwords - whether to use Friends names or not. If 'True' it will add Friends names to stopwords.
-    
-    Parameters:
-    ----------
-    stop_friends_on_off - True/False statement.
-    
-    Return:
-    ------
-    stopwords - list of the used stopwords.
-    '''
-    
-    stopwords = set(STOPWORDS) #set(STOPWORDS) for default exclusion
-    
-    stopwords.add("Scene")
-    #print(stopwords)
-    # Need to add stopwords for Frinds if I don't want to show their names
-    stop_friends = stop_friends_on_off
-
-    if stop_friends == True:
-        stopwords.add("Monica")
-        stopwords.add("Rachel")
-        stopwords.add("Ross")
-        stopwords.add("Phoebe")
-        stopwords.add("Chandler")
-        stopwords.add("Joey")
-        print('Friends names will be excluded.')
-    else:
-        print('Firends names will be included.')
-
-    return stopwords
-
-
-def generate_wordcloud_bilinear(episode, max_font_size ):
-    '''
-    Make a wordcloud based on the episode. Use bilinear interpolation and max font size.
-    
-    Parametes:
-    ---------
-    episode - txt of the loaded episode.
-    font_size - Integer. Maximum font size used on the image.
-    
-    Return:
-    ------
-    Makes a wordcloud and plots it.
-    '''
-    
-    # lower max_font_size
-    wordcloud = WordCloud(width=width, height=height, background_color=bck_color, 
-                          min_font_size=min_font_size, stopwords=stopwords, colormap = colourmap,
-                         relative_scaling=relative_scaling, collocations=collocations).generate(episode)
-    
-    
-    plt.figure(figsize=(15,15))
-    plt.imshow(wordcloud, interpolation="bilinear")
-    plt.axis("off")
-    plt.show()
-
-
-def generate_wordcloud_all_in_season(all_episodes_in_a_season_txt):
-    """
-    Generate wordclouds for each episode in a season.
-    
-    Parameters:
-    -----------
-    all_episodes_in_a_season_txt - A list of all episodes in a season as txt file, converted from html.
-    
-    Return:
-    -------
-    Wordcloud figures for each episode
-    
-    """
-    
-    for each_ep in np.arange(0, len(all_episodes_in_a_season_txt), 1):
-        generate_wordcloud_bilinear(all_episodes_in_a_season_txt[each_ep], max_font_size)
-
-    return
-
-def generate_wordcloud_with_mask(mask_image, episode):
-    '''
-    Make a wordcloud using image as a mask.
-    
-    Parameters:
-    ----------
-    mask_image - Image. Used as a mask.
-    episode - txt file. 
-    
-    Return:
-    ------
-    Saves wordcloud figure and plots the output.
-    '''
-
-    friends_mask = np.array(Image.open(mask_image))
-
-    wc = WordCloud(width=width, height=height, background_color="white", max_words=2000, mask=friends_mask,
-               stopwords=stopwords, contour_width=2, min_font_size=min_font_size, contour_color='grey', 
-                  colormap = colourmap).generate(episode)
-
-    # show
-    plt.figure(figsize=(20,20))
-    plt.imshow(wc, interpolation='bilinear')
-    plt.axis("off")
-
-    plt.show()
-    return
-
-
 def get_friend_line(friend_name, episode):
     '''
     Get the lines of a friend in an episode. These lines can include (one_friend) or exclude (one_friend_clear) the scene description.
@@ -317,32 +208,6 @@ def get_friend_line_each_ep_in_season(friend_name, all_episodes_in_a_season_txt)
         friend_clear_s.append(friend_clear_tmp)
     #print(friend_clear_s)
     return friend_s, friend_clear_s
-
-
-# ## WordCloud per season per Friend
-
-def generate_wordcloud_friend_in_season(friend_clear_s):
-    """
-    Generate a wordloud of a Friend for each episode in a season.
-    
-    Parameter:
-    ----------
-    friend_clear_s - Lines of the selected friend, cleared.
-
-    Return:
-    -------
-    WordClouds.
-    
-    """
-    for each_ep in np.arange(0, len(friend_clear_s), 1):
-        try:
-            generate_wordcloud_bilinear(friend_clear_s[each_ep],  max_font_size)
-    
-        # I'm raising value error because s01e16 is formated differently, thus text for a friend is not detected at the moment
-        except ValueError:
-            pass
-            print('There is an error in episode {0}'.format(each_ep+1))
-    return
 
 
 def count_friend_words(friend_clear_s):
@@ -451,27 +316,6 @@ def make_word_dataframe(friend_clear_s, friend_name):
 
     return df
 
-
-def plot_top_repeating_words(first_x_words, df):
-
-    fig, ax = plt.subplots(1, figsize=(15,10))
-
-    #plt.figure(figsize=(10,10))
-    plt.bar(df['word'][0:first_x_words], df['count'][0:first_x_words], color='lightgrey', edgecolor='k')
-
-    ax.tick_params(axis='both', which='major', labelsize=16)
-
-    plt.xlabel('Words', fontsize=24)
-    plt.ylabel('Count', fontsize=22)
-
-
-    for bar in ax.patches:
-        height = bar.get_height()
-        ax.text(bar.get_x()+bar.get_width()/2.,
-                height + 0.2,
-                '{:1.2f}'.format(height),
-                ha="center",fontsize=18) 
-
 def selfish_friend_words_values(i_count, im_count, my_count):
     """
     Count selfish words, such as: I, Im, Me
@@ -523,58 +367,11 @@ def selfish_friend_words_values(i_count, im_count, my_count):
     return i_values, im_values, my_values, sum_values
 
 
-
-def make_plot_selfish_words(i_values, im_values, my_values, sum_values, friend_name):
-    """
-    Make a bar plot of the selfish words throughout the season.
-    
-    Parameters:
-    -----------
-    i_values - List of integers. Word counts.
-    im_values - List of integers. Word counts.
-    my_values - List of integers. Word counts.
-    sum_values - List of integers. Sum of all defined selfish words.
-    friend_name - Modified string of a friend nema; e.g. if you want Monica, you type: '**Monica:**'
-
-    
-    Return:
-    -------
-    Plot.
-    
-    """
-    
-    
-    A = np.arange(1, len(i_count)+1, 1)
-
-    fig, ax = plt.subplots(1, figsize=(15,10))
-
-
-    #plt.bar(A, i_values, color='grey', edgecolor='k', label='I', alpha=1)
-    #plt.bar(A, im_values, color='lightgrey', edgecolor='k', label='I\'m', alpha = 0.5)
-    #plt.bar(A, my_values, color='white', edgecolor='k', label='My', alpha = 0.8)
-
-    plt.bar(A, sum_values, color='lightgrey', edgecolor='k', label='I, I\'m, My [{0}]'.format(friend_name[2:-3]), alpha = 1)
-
-
-    ax.tick_params(axis='both', which='major', labelsize=16)
-
-    plt.xlabel('Episode', fontsize=24)
-    plt.ylabel('Counts', fontsize=22)
-    plt.legend(loc=0, fontsize=20)
-
-    for bar in ax.patches:
-        height = bar.get_height()
-        ax.text(bar.get_x()+bar.get_width()/2.,
-                height + 0.2,
-                '{}'.format(height),
-                ha="center",fontsize=18)
-    return
-
 ##################################################
 ########### Handle the functions #################
 ##################################################
-outdir = './output/'
-    
+
+outdir = './output/'    
 path = './season/'
 filename = '0117.html'
 
@@ -605,40 +402,17 @@ if __name__ == "__main__":
 
     print(len(all_episodes_in_a_season_txt))
     #print(all_episodes_in_a_season_txt[18])
-    
-    # WordCloud
-    # Create stopwords
-    stopwords = add_stopwords_to_wordcloud(True);
-    
-    # Define parameters for wordcloud
-    max_font_size = 100
-    min_font_size = 20
-    bck_color = 'white'
-    #width = 500
-    #height = 300
-    width=1600
-    height=800
-    colourmap = plt.cm.cividis_r
-    relative_scaling = 1 # relative scaling sets how to adjust the font sizes based on frequency
-                    # relative_scaling == 1.0 means frequency dictates font-size -> Hides low-frequency words
-                    # relative_scaling == 0.0 means rank dictates the relative font-size -> hides how frequently a word might appear
 
-    collocations = False # if true, it will group phrases; if false it will take single words
-
-    # Wordcloud for episode
-    #generate_wordcloud_bilinear(first_episode, max_font_size)
-
-    # Wordcloud for each episode in a season
-    #generate_wordcloud_all_in_season(all_episodes_in_a_season_txt)
-    
-    # WordCloud with a mask
-    mask_image = 'friends_couch.jpg'
-    #generate_wordcloud_with_mask(mask_image, first_episode)
-    
     
     # A Friend lines
     list_of_friends = ['**Monica:**', '**Rachel:**', '**Ross:**', '**Joey:**', '**Phoebe:**', '**Chandler:**']
     
+    store_i = []
+    store_im = []
+    store_my = []
+    store_sum = []
+    
+        
     for i, friend in enumerate(list_of_friends):
         friend_name = friend
     
@@ -658,20 +432,25 @@ if __name__ == "__main__":
     # DIFFERENT FORMATING FOR THE EPISODE
     #print(friend_s[15])
     
-    # WordCloud
-    #generate_wordcloud_bilinear(friend_clear_s[0], max_font_size)
-    
-    #generate_wordcloud_friend_in_season(friend_clear_s)
-
         words, dataframe = count_friend_words(friend_clear_s)
 
         i_count, im_count, my_count = selfish_friend_words(dataframe)
 
         df = make_word_dataframe(friend_clear_s, friend_name)
 
-        first_x_words = 15
-    #plot_top_repeating_words(first_x_words, df)
-
         i_values, im_values, my_values, sum_values = selfish_friend_words_values(i_count, im_count, my_count)
 
-        make_plot_selfish_words(i_values, im_values, my_values, sum_values, friend_name)
+        store_i.append(i_values)
+        store_im.append(im_values)
+        store_my.append(my_values)
+        store_sum.append(sum_values)
+               
+    _friends = ['Monica', 'Rachel', 'Ross', 'Joey', 'Phoebe', 'Chandler']
+
+    df_counted = pd.DataFrame({'SumMonica': store_sum[0], 
+                               'SumRachel': store_sum[1],
+                               'SumRoss':   store_sum[2],
+                               'SumJoey':   store_sum[3],
+                               'SumPhoebe': store_sum[4],
+                               'SumChandler': store_sum[5]})
+    print(df_counted)
