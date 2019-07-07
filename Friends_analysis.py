@@ -144,12 +144,15 @@ def get_friend_line(friend_name, episode):
     one_friend_clear - Strings. Contain all lines of a friend withoud scene description.
         
     '''
+    
+    
     # Import episode into the testfile.txt
     file_episode = open('testfile.txt','w', encoding='utf-8') 
     file_episode.write(episode) 
     
     # Search friend lines
     searchquery = friend_name
+    
     # From the episode file (testfile) read and write all friend lines into test_friend file.
     with open('testfile.txt', encoding='utf-8') as f1:
         with open('test_friend.txt', 'w', encoding='utf-8') as f2:
@@ -171,6 +174,29 @@ def get_friend_line(friend_name, episode):
                 if line.startswith(searchquery[0:-3]+'** :'):
                     f2.write(lines[i])
                     
+                # Most of season 2 has CAPITAL names "ROSS" etc.
+                    
+                if line.startswith((searchquery[2:-3]+':').upper()):
+                    f2.write(lines[i])
+                    
+                # SEASON 2 EPISODE 7,8, 10, have their names: MNCA, RACH, JOEY, ROSS, CHAN, PHOE
+                    
+                if line.startswith(searchquery[2:6].upper()):
+                    f2.write(lines[i])
+                if line.startswith((searchquery[2]+searchquery[4]+searchquery[6:8]).upper()):
+                    f2.write(lines[i])
+                
+                # Season 3 'Name:**'
+                if line.startswith(searchquery[2:]):
+                    f2.write(lines[i])
+                    
+                # ROSS s6e10 ****Ross:****
+                if line.startswith('**'+searchquery+'**'):
+                    f2.write(lines[i])
+                    
+                # S8E15 " Ross: ** "
+                if line.startswith(searchquery[2:-3]+': **'):
+                    f2.write(lines[i])
 
                 
     file = open('test_friend.txt', 'r',encoding='utf-8') 
@@ -256,30 +282,36 @@ def selfish_friend_words(dataframe):
     i_count - List of integers. Word counts.
     im_count - List of integers. Word counts.
     my_count - List of integers. Word counts.
+    me_count - List of integers. Word counts.
     
     """
     i_count = []
     im_count = []
     my_count = []
+    me_count = []
 
     for i in np.arange(0, len(dataframe), 1):
 
         try:
     
-            letter_i = dataframe[i][0] [dataframe[i]['index']=='i']
+            letter_i = dataframe[i][0] [ (dataframe[i]['index']=='i') | (dataframe[i]['index']=='_i')]
             i_count.append(letter_i.values)
         
-            letter_im = dataframe[i][0] [dataframe[i]['index']=='i\'m']
+            letter_im = dataframe[i][0] [ (dataframe[i]['index']=='i\'m') | (dataframe[i]['index']=='i\'ve') | (dataframe[i]['index']=='i\'ll') | (dataframe[i]['index']=='i\'d') ]
             im_count.append(letter_im.values)
-        
-            letter_my = dataframe[i][0] [dataframe[i]['index']=='my']
-            my_count.append(letter_my.values)
 
+            
+            letter_my = dataframe[i][0] [ (dataframe[i]['index']=='my') | (dataframe[i]['index']=='mine')]
+            my_count.append(letter_my.values)
+            
+            letter_me = dataframe[i][0] [dataframe[i]['index']=='me']
+            me_count.append(letter_me.values)
+            
         except KeyError:
             pass
             print('No words in episode {0}'.format(i+1))
             
-    return i_count, im_count, my_count
+    return i_count, im_count, my_count, me_count
 
 def make_word_dataframe(friend_clear_s, friend_name):
     """
@@ -316,7 +348,7 @@ def make_word_dataframe(friend_clear_s, friend_name):
 
     return df
 
-def selfish_friend_words_values(i_count, im_count, my_count):
+def selfish_friend_words_values(i_count, im_count, my_count, me_count):
     """
     Count selfish words, such as: I, Im, Me
     
@@ -325,7 +357,8 @@ def selfish_friend_words_values(i_count, im_count, my_count):
     i_count - List of integers. Word counts.
     im_count - List of integers. Word counts.
     my_count - List of integers. Word counts.
-    
+    me_count - List of integers. Word counts.
+
     Return:
     -------
     i_values - List of integers. Word counts.
@@ -339,6 +372,7 @@ def selfish_friend_words_values(i_count, im_count, my_count):
     i_values = []
     im_values = []
     my_values = []
+    me_values = []
 
     for i in np.arange(0, len(i_count), 1):
         try:
@@ -361,10 +395,17 @@ def selfish_friend_words_values(i_count, im_count, my_count):
         except IndexError:
             my_values.append(0)        
         
+    for i in np.arange(0, len(me_count), 1):
+        try:
+            value = me_count[i][0]
+            me_values.append(value)
+        except IndexError:
+            me_values.append(0)  
+            
         # Sum all individual words
-    sum_values = [x + y + z for x, y, z in zip(i_values, im_values, my_values)]
+    sum_values = [x + y + z + w for x, y, z, w in zip(i_values, im_values, my_values, me_values)]
 
-    return i_values, im_values, my_values, sum_values
+    return i_values, im_values, my_values, me_values, sum_values
 
 
 ##################################################
@@ -383,14 +424,15 @@ if __name__ == "__main__":
     outdir = './output/'
     
     path = './season/'
-    filename = '0117.html'
+    filename = '0102.html'
 
+    
 
     # Open html page
     f = open_html(filename)
+
     
-    
-    first_season = '01*.html'
+    first_season = '*.html'
     first_season_episodes = all_episodes(path, first_season)
     print(len(first_season_episodes))
     
@@ -407,15 +449,17 @@ if __name__ == "__main__":
     # A Friend lines
     list_of_friends = ['**Monica:**', '**Rachel:**', '**Ross:**', '**Joey:**', '**Phoebe:**', '**Chandler:**']
     
+    
     store_i = []
     store_im = []
     store_my = []
+    store_me = []
     store_sum = []
     
         
     for i, friend in enumerate(list_of_friends):
         friend_name = friend
-    
+
     #friend_name = '**Monica:**'
     #friend_name = '**Rachel:**'
     #friend_name = '**Ross:**'
@@ -425,24 +469,25 @@ if __name__ == "__main__":
     
     # Get a Friend line
         friend, friend_clear = get_friend_line(friend_name, first_episode)
-    #print(friend_clear)
+        #print(friend_clear)
     # Get a Friend lines for every episode in a season
         friend_s, friend_clear_s = get_friend_line_each_ep_in_season(friend_name, all_episodes_in_a_season_txt)
 
     # DIFFERENT FORMATING FOR THE EPISODE
-    #print(friend_s[15])
+        #print(friend_s[2])
     
         words, dataframe = count_friend_words(friend_clear_s)
-
-        i_count, im_count, my_count = selfish_friend_words(dataframe)
+        #print(words)
+        i_count, im_count, my_count, me_count = selfish_friend_words(dataframe)
 
         df = make_word_dataframe(friend_clear_s, friend_name)
 
-        i_values, im_values, my_values, sum_values = selfish_friend_words_values(i_count, im_count, my_count)
+        i_values, im_values, my_values, me_values, sum_values = selfish_friend_words_values(i_count, im_count, my_count, me_count)
 
         store_i.append(i_values)
         store_im.append(im_values)
         store_my.append(my_values)
+        store_me.append(me_values)
         store_sum.append(sum_values)
                
     _friends = ['Monica', 'Rachel', 'Ross', 'Joey', 'Phoebe', 'Chandler']
@@ -454,3 +499,5 @@ if __name__ == "__main__":
                                'SumPhoebe': store_sum[4],
                                'SumChandler': store_sum[5]})
     print(df_counted)
+
+    
