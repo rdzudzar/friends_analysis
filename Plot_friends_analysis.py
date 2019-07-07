@@ -6,6 +6,7 @@ Created on Sat Jul  6 11:24:44 2019
 """
 
 # Create Friends plots
+# Import all functions as tuple
 from Friends_analysis import *
 
 from wordcloud import WordCloud, STOPWORDS#, ImageColorGenerator
@@ -237,7 +238,7 @@ def make_lineplot_selfish_words(i_values, im_values, my_values, sum_values, frie
     
     A = np.arange(1, len(i_count)+1, 1)
 
-    fig, ax = plt.subplots(1, figsize=(15,10))
+    #fig, ax = plt.subplots(1, figsize=(15,10))
 
 
     #plt.bar(A, i_values, color='grey', edgecolor='k', label='I', alpha=1)
@@ -245,13 +246,37 @@ def make_lineplot_selfish_words(i_values, im_values, my_values, sum_values, frie
     #plt.bar(A, my_values, color='white', edgecolor='k', label='My', alpha = 0.8)
     #print(store_sum)
     
-    _friends = ['Monica', 'Rachel', 'Ross', 'Joey', 'Phoebe', 'Chandler']
+    # Create a dictionary with a Friend and color selection
+    # Place True for a Friend which you want to have highlighted color, 
+    # else it will have lightgrey color
+    select_dict = {
+            'Monica'  : (False, 'lightgrey', 'black'),
+            'Rachel'  : (True, 'lightgrey', '#0868ac'),
+            'Ross'    : (True, 'lightgrey', '#c51b7d'),
+            'Joey'    : (False, 'lightgrey', '#c51b8a'),
+            'Phoebe'  : (False, 'lightgrey', '#e34a33'),
+            'Chandler': (False, 'lightgrey', '#8c510a')
+            }   
+    # Create a list of _colors from the dictionary above, based on the selected
+    # Friend. 
+    _colors = []
+    for key in select_dict.keys():
+        if select_dict[key][0] == True:
+            colors = select_dict[key][2]
+        else:
+            colors = select_dict[key][1]
+        
+        _colors.append(colors)
+    
+    
+    #_friends = ['Monica', 'Rachel', 'Ross', 'Joey', 'Phoebe', 'Chandler']
     #_colors = ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c']
-    _colors = ['#7fc97f','k','#fdc086','lightgrey','#386cb0','#f0027f']
+    #_colors = ['#7fc97f','k','#fdc086','lightgrey','#386cb0','#f0027f']
     #_colors = ['#762a83','#af8dc3','#e7d4e8','#d9f0d3','#7fbf7b','#1b7837']
-    df_counted.plot(kind='bar',width=1, color=_colors, figsize=(14,9))
+    
+    df_counted.plot(kind='line', color=_colors, figsize=(14,9))
 
-    ax.tick_params(axis='both', which='major', labelsize=16)
+    #ax.tick_params(axis='both', which='major', labelsize=16)
 
     plt.xlabel('Episode', fontsize=24)
     plt.ylabel('Counts', fontsize=22)
@@ -324,11 +349,11 @@ if __name__ == "__main__":
     
         words, dataframe = count_friend_words(friend_clear_s)
 
-        i_count, im_count, my_count = selfish_friend_words(dataframe)
+        i_count, im_count, my_count, me_count = selfish_friend_words(dataframe)
 
         df = make_word_dataframe(friend_clear_s, friend_name)
 
-        i_values, im_values, my_values, sum_values = selfish_friend_words_values(i_count, im_count, my_count)
+        i_values, im_values, my_values, me_values, sum_values = selfish_friend_words_values(i_count, im_count, my_count, me_count)
                 
         first_x_words = 15
         #plot_top_repeating_words(first_x_words, df)
