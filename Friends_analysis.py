@@ -209,6 +209,51 @@ def get_friend_line(friend_name, episode):
     return one_friend, one_friend_clear
 
 
+def get_episode_title(episode):
+    '''
+    Get the titles of the episode.
+    
+    Parameters:
+    ----------
+    episode - .txt file, converted from html in a function convert_html_to_text.
+
+    Return:
+    ------
+
+    title_friend - Strings. Contain title of the episode.
+        
+    '''
+    
+    
+    # Import episode into the testfile.txt
+    file_episode = open('titlefile.txt','w', encoding='utf-8') 
+    file_episode.write(episode) 
+    
+    # Search for titles, most of them start with #, however, off course
+    # There are lot of different formatings+
+    searchqueries = ('#', 'The One', '9', 'FRIENDS - THE ONE', '**The One', '10')
+    skipqueries = ('###', '## credits', '## friends', '# friends')
+    
+    # From the episode file (testfile) read and write all friend lines into test_friend file.
+    with open('titlefile.txt', encoding='utf-8') as f1:
+        with open('title_friend.txt', 'w', encoding='utf-8') as f2:
+            lines = f1.readlines()
+
+            for i, line in enumerate(lines):
+                # Some lines starts with # but they are not titles, skip those
+                if line.lower().startswith(skipqueries):
+                    continue
+                
+                # Add lines that starts with searcqueries
+                if line.startswith(searchqueries):
+                    f2.write(lines[i])
+
+    file = open('title_friend.txt', 'r',encoding='utf-8') 
+    title_friend = file.read();
+    
+    return title_friend
+
+
 def get_friend_line_each_ep_in_season(friend_name, all_episodes_in_a_season_txt):
     """
     Get the Friend lines from each episode in a season.
@@ -407,6 +452,32 @@ def selfish_friend_words_values(i_count, im_count, my_count, me_count):
 
     return i_values, im_values, my_values, me_values, sum_values
 
+def match_phrase(input_text, _pattern):
+    
+    """
+    Find phrases in the text and count how many times it appears.
+    
+    Parameters
+    ----------
+    input_text - Strings.
+    _pattern - List f string for search.
+    
+    Return
+    ------
+    len(count_match) - how many instances of the search query were found
+    """
+    
+    # Search for a repeating pattern in a text
+    count_match = []
+    pattern = _pattern
+    for match in re.finditer(pattern, input_text.lower()):
+        
+        count_match.append(match)
+
+    print('Found {0} matches of {1}'.format(len(count_match), _pattern))
+
+    return len(count_match)
+
 
 ##################################################
 ########### Handle the functions #################
@@ -424,7 +495,7 @@ if __name__ == "__main__":
     outdir = './output/'
     
     path = './season/'
-    filename = '0102.html'
+    filename = '1003.html'
 
     
 
@@ -434,18 +505,23 @@ if __name__ == "__main__":
     
     first_season = '*.html'
     first_season_episodes = all_episodes(path, first_season)
-    print(len(first_season_episodes))
+    #print(first_season_episodes[0][0])
     
     #Convert html into readable text using html2text
     first_episode = convert_html_to_text(f)
-    #print(first_episode)
+    #print(first_episode[0:200])
     # Get txt for all episodes in a season
     all_episodes_in_a_season_txt = convert_season_html_to_text(first_season_episodes)
 
-    print(len(all_episodes_in_a_season_txt))
+    #print(all_episodes_in_a_season_txt)
     #print(all_episodes_in_a_season_txt[18])
-
     
+    store_all_titles = []
+    for i, each_ep in enumerate(all_episodes_in_a_season_txt):
+        title = get_episode_title(each_ep)
+        #print('Episode {0} is: {1}'.format(i, title))
+        store_all_titles.append(title)
+        
     # A Friend lines
     list_of_friends = ['**Monica:**', '**Rachel:**', '**Ross:**', '**Joey:**', '**Phoebe:**', '**Chandler:**']
     
@@ -460,12 +536,6 @@ if __name__ == "__main__":
     for i, friend in enumerate(list_of_friends):
         friend_name = friend
 
-    #friend_name = '**Monica:**'
-    #friend_name = '**Rachel:**'
-    #friend_name = '**Ross:**'
-    #friend_name = '**Joey:**'
-    #friend_name = '**Phoebe:**'
-    #friend_name = '**Chandler:**'
     
     # Get a Friend line
         friend, friend_clear = get_friend_line(friend_name, first_episode)
@@ -489,7 +559,8 @@ if __name__ == "__main__":
         store_my.append(my_values)
         store_me.append(me_values)
         store_sum.append(sum_values)
-               
+
+
     _friends = ['Monica', 'Rachel', 'Ross', 'Joey', 'Phoebe', 'Chandler']
 
     df_counted = pd.DataFrame({'SumMonica': store_sum[0], 
@@ -500,4 +571,3 @@ if __name__ == "__main__":
                                'SumChandler': store_sum[5]})
     print(df_counted)
 
-    
