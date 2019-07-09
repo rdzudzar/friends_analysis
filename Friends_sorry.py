@@ -25,21 +25,23 @@ def make_bokeh_line_plot():
     
     
     
-    source = {name: ColumnDataSource(
+    source = ColumnDataSource(
         data=dict(
             x=df_only_sorry.index,
-            y=df_only_sorry['Sum'+name],
+            mon=df_only_sorry['SumMonica'],
+            rac=df_only_sorry['SumRachel'],
+            pho=df_only_sorry['SumPhoebe'],
+            joe=df_only_sorry['SumJoey'],
+            cha=df_only_sorry['SumChandler'],
+            ros=df_only_sorry['SumRoss'],
             episode = df_only_sorry['Titles'],
         )
-    ) for name in _friends}
+    ) 
 
     hover = HoverTool(
         tooltips=[
             ("index", "Episode $index"),
-#            ("(x,y)", "($x, $y)"),
             ("episode", "@episode")
-#            ("Desc", "%s" % ([0]*len(df_only_sorry.index))),
-#            ("Desc2", "@desc")
         ]
     )
     
@@ -48,32 +50,24 @@ def make_bokeh_line_plot():
     p = figure(plot_width=1300, plot_height=700, tools=[hover])
     p.title.text = 'Click on a Friend, Series analysis'
 
-    #for data, name, color in zip([AAPL, IBM, MSFT, GOOG], ["AAPL", "IBM", "MSFT", "GOOG"], Spectral4):
 
-
-    p.line(df_only_sorry.index, df_only_sorry['SumMonica'], line_width=4, color='lightgrey', 
+    p.line('x','mon', source=source, line_width=4, color='lightgrey', 
        alpha=0.4, muted_color='#8c510a', muted_alpha=1, legend='Monica')
         
-    p.line(df_only_sorry.index, df_only_sorry['SumMonica'], line_width=4, color='lightgrey', 
-       alpha=0.4, muted_color='#8c510a', muted_alpha=1, legend='Monica')
-
-    p.line(df_only_sorry.index, df_only_sorry['SumRachel'], line_width=4, color='lightgrey', 
+    p.line('x', 'rac', source=source, line_width=4, color='lightgrey', 
        alpha=0.4, muted_color='#01665e', muted_alpha=1, legend='Rachel')
 
-    p.line(df_only_sorry.index,df_only_sorry['SumPhoebe'], line_width=4, color='lightgrey', 
+    p.line('x', 'pho', source=source, line_width=4, color='lightgrey', 
        alpha=0.4, muted_color='#c51b7d', muted_alpha=1, legend='Phoebe')
  
-    p.line(df_only_sorry.index,df_only_sorry['SumJoey'], line_width=4, color='lightgrey', 
+    p.line('x', 'joe', source=source, line_width=4, color='lightgrey', 
        alpha=0.4, muted_color='#4d4d4d', muted_alpha=1, legend='Joey')
-    p.line(df_only_sorry.index,df_only_sorry['SumChandler'], line_width=4, color='lightgrey', 
+    
+    p.line('x', 'cha', source=source, line_width=4, color='lightgrey', 
        alpha=0.4, muted_color='#762a83', muted_alpha=1, legend='Chandler')
 
-    p.line(df_only_sorry.index,df_only_sorry['SumRoss'], line_width=4, color='lightgrey', 
+    p.line('x', 'ros', source=source, line_width=4, color='lightgrey', 
        alpha=0.4, muted_color='#b2182b', muted_alpha=1, legend='Ross')
-
-    p.select(dict(type=HoverTool)).tooltips = {"episode":"@episode"}
-
-   # p.add_tools(hover)
 
 
     p.legend.location = "top_right"

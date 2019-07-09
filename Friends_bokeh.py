@@ -14,27 +14,48 @@ from Friends_analysis import *
 
 def make_bokeh_line_plot():
     
-    p = figure(plot_width=1300, plot_height=700)
+    source = ColumnDataSource(
+        data=dict(
+            x=df_counted.index,
+            mon=df_counted['SumMonica'],
+            rac=df_counted['SumRachel'],
+            pho=df_counted['SumPhoebe'],
+            joe=df_counted['SumJoey'],
+            cha=df_counted['SumChandler'],
+            ros=df_counted['SumRoss'],
+            episode = df_only_sorry['Titles'],
+        )
+    ) 
+
+    hover = HoverTool(
+        tooltips=[
+            ("index", "Episode $index"),
+            ("episode", "@episode")
+        ]
+    )
+    
+    
+    
+    p = figure(plot_width=1300, plot_height=700, tools=[hover])
     p.title.text = 'Click on a Friend, Series analysis'
 
-    #for data, name, color in zip([AAPL, IBM, MSFT, GOOG], ["AAPL", "IBM", "MSFT", "GOOG"], Spectral4):
 
-    p.line(df_counted.index, df_counted['SumMonica'], line_width=4, color='lightgrey', 
+    p.line('x','mon', source=source, line_width=4, color='lightgrey', 
        alpha=0.4, muted_color='#8c510a', muted_alpha=1, legend='Monica')
-
-    p.line(df_counted.index, df_counted['SumRachel'], line_width=4, color='lightgrey', 
+        
+    p.line('x', 'rac', source=source, line_width=4, color='lightgrey', 
        alpha=0.4, muted_color='#01665e', muted_alpha=1, legend='Rachel')
 
-    p.line(df_counted.index,df_counted['SumPhoebe'], line_width=4, color='lightgrey', 
+    p.line('x', 'pho', source=source, line_width=4, color='lightgrey', 
        alpha=0.4, muted_color='#c51b7d', muted_alpha=1, legend='Phoebe')
-
-    p.line(df_counted.index,df_counted['SumJoey'], line_width=4, color='lightgrey', 
+ 
+    p.line('x', 'joe', source=source, line_width=4, color='lightgrey', 
        alpha=0.4, muted_color='#4d4d4d', muted_alpha=1, legend='Joey')
-
-    p.line(df_counted.index,df_counted['SumChandler'], line_width=4, color='lightgrey', 
+    
+    p.line('x', 'cha', source=source, line_width=4, color='lightgrey', 
        alpha=0.4, muted_color='#762a83', muted_alpha=1, legend='Chandler')
 
-    p.line(df_counted.index,df_counted['SumRoss'], line_width=4, color='lightgrey', 
+    p.line('x', 'ros', source=source, line_width=4, color='lightgrey', 
        alpha=0.4, muted_color='#b2182b', muted_alpha=1, legend='Ross')
 
 
