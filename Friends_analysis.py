@@ -6,7 +6,7 @@ Created on Wed Jul  3 19:29:21 2019
 """
 
 #Imports
-#import os
+import os
 #from os import path
 
 import functools
@@ -142,7 +142,37 @@ def get_friend_line(friend_name, episode):
 
     one_friend - Strings. Contain all lines of a friend.
     one_friend_clear - Strings. Contain all lines of a friend withoud scene description.
+    line_numbers - Integers. Number of lines per Friend per episode.
+    
+    Explanation:
+    ------------
+    searchqueries explained:
         
+        #Sometimes there are multiple lines, but not all starts with searchquer
+        #Add them to the list if they dont start with ** because that would mean different Friend is speaking                       
+        # Adjust: remove first 2 characters and rearange last 3
+        
+        # if line.startswith(searchquery[2:-3]+'**:'): #'Name**:'):
+        #                    
+        ## Ross has different formating in ep 16,17, thus this condition:
+        # if line.startswith(searchquery[0:-3]+'** :'):
+        #                    
+        ## Most of season 2 has CAPITAL names "ROSS" etc.
+        #  if line.startswith((searchquery[2:-3]+':').upper()):
+        #                    
+        ## SEASON 2 EPISODE 7,8, 10, have their names: MNCA, RACH, JOEY, ROSS, CHAN, PHOE
+        #  if line.startswith(searchquery[2:6].upper()):
+        #  if line.startswith((searchquery[2]+searchquery[4]+searchquery[6:8]).upper()):
+        #                
+        ## Season 3 'Name:**'
+        # if line.startswith(searchquery[2:]):
+        #                    
+        ## ROSS s6e10 ****Ross:****
+        # if line.startswith('**'+searchquery+'**'):
+        #                    
+        ## S8E15 " Ross: ** "
+        # if line.startswith(searchquery[2:-3]+': **'):
+    
     '''
     
     
@@ -153,7 +183,14 @@ def get_friend_line(friend_name, episode):
     # Search friend lines
     searchquery = friend_name
     
-    # From the episode file (testfile) read and write all friend lines into test_friend file.
+    # Get all the searchqueries, due to the different text formating
+    #
+    searchqueries = (searchquery, searchquery[2:-3]+'**:', searchquery[0:-3]+'** :',
+                     (searchquery[2:-3]+':').upper(), searchquery[2:6].upper(),
+                     (searchquery[2]+searchquery[4]+searchquery[6:8]).upper(),
+                     searchquery[2:], '**'+searchquery+'**', searchquery[2:-3]+': **')
+   
+   # From the episode file (testfile) read and write all friend lines into test_friend file.
     with open('testfile.txt', encoding='utf-8') as f1:
         with open('test_friend.txt', 'w', encoding='utf-8') as f2:
             lines = f1.readlines()
@@ -161,52 +198,24 @@ def get_friend_line(friend_name, episode):
             for i, line in enumerate(lines):
 
                 # Add lines that starts with searcquery
-                if line.startswith(searchquery):
+                if line.startswith(searchqueries):
                     f2.write(lines[i])
-
-                #Sometimes there are multiple lines, but not all starts with searchquer
-                #Add them to the list if they dont start with ** because that would mean different Friend is speaking                       
-                # Adjust: remove first 2 characters and rearange last 3
-                if line.startswith(searchquery[2:-3]+'**:'): #'Name**:'):
-                    f2.write(lines[i])
-                    
-                # Ross has different formating in ep 16,17, thus this condition:
-                if line.startswith(searchquery[0:-3]+'** :'):
-                    f2.write(lines[i])
-                    
-                # Most of season 2 has CAPITAL names "ROSS" etc.
-                    
-                if line.startswith((searchquery[2:-3]+':').upper()):
-                    f2.write(lines[i])
-                    
-                # SEASON 2 EPISODE 7,8, 10, have their names: MNCA, RACH, JOEY, ROSS, CHAN, PHOE
-                    
-                if line.startswith(searchquery[2:6].upper()):
-                    f2.write(lines[i])
-                if line.startswith((searchquery[2]+searchquery[4]+searchquery[6:8]).upper()):
-                    f2.write(lines[i])
-                
-                # Season 3 'Name:**'
-                if line.startswith(searchquery[2:]):
-                    f2.write(lines[i])
-                    
-                # ROSS s6e10 ****Ross:****
-                if line.startswith('**'+searchquery+'**'):
-                    f2.write(lines[i])
-                    
-                # S8E15 " Ross: ** "
-                if line.startswith(searchquery[2:-3]+': **'):
-                    f2.write(lines[i])
-
+            
+            
                 
     file = open('test_friend.txt', 'r',encoding='utf-8') 
     one_friend = file.read();
+
+    # Count the number of lines in a file
+    # Shape: Friend x episode (example: Monica: 44, 55, ... etc.)
+    # And then other friend and other friend
+    line_numbers = sum(1 for line in open('test_friend.txt', encoding='utf-8'))
 
     # Remove text within [] and () brackets. These lines are scene description.
     one_friend_tmp = re.sub( "\[[^\]]*\]", "", one_friend) # Removes []
     one_friend_clear = re.sub('\([^)]*\)', "",one_friend_tmp) # Removes ()
     
-    return one_friend, one_friend_clear
+    return one_friend, one_friend_clear, line_numbers
 
 
 def get_episode_title(episode):
@@ -250,8 +259,15 @@ def get_episode_title(episode):
 
     file = open('title_friend.txt', 'r',encoding='utf-8') 
     title_friend = file.read();
-    
-    return title_friend
+        
+    #clean titles; remove (), #, numbers
+    title_bracket = re.sub('\([^)]*\)', "",title_friend)
+    # Remove everythin befor the first `The` in the title
+    # Using only 'T' because some of them are strting with 
+    # THE and some of them starting with TOW (the one with)
+    title_clean = title_bracket[title_bracket.find('T'):].capitalize()
+
+    return title_clean
 
 
 def get_friend_line_each_ep_in_season(friend_name, all_episodes_in_a_season_txt):
@@ -267,18 +283,21 @@ def get_friend_line_each_ep_in_season(friend_name, all_episodes_in_a_season_txt)
     ------
     friend_s - Lines of the selected friend
     friend_clear_s - Lines of the selected friend, cleared.
+    num_lines - List of integers. Number of lines for each Friend.
     
     """
     friend_s = []
     friend_clear_s = []
+    num_lines = []
 
     for each_ep in np.arange(0, len(all_episodes_in_a_season_txt), 1):
-        friend_tmp, friend_clear_tmp = get_friend_line(friend_name, all_episodes_in_a_season_txt[each_ep])
-    
+        friend_tmp, friend_clear_tmp, lines = get_friend_line(friend_name, all_episodes_in_a_season_txt[each_ep])
+        num_lines.append(lines)
+        
         friend_s.append(friend_tmp)
         friend_clear_s.append(friend_clear_tmp)
-    #print(friend_clear_s)
-    return friend_s, friend_clear_s
+
+    return friend_s, friend_clear_s, num_lines
 
 
 def count_friend_words(friend_clear_s):
@@ -303,7 +322,7 @@ def count_friend_words(friend_clear_s):
         # Use Counter to count the words; It will be dictionary
         words_count = Counter(map(str.lower, friend_clear_s[i].split()))
         words.append(words_count)
-
+        
     dataframe = []
     for i in np.arange(0, len(words), 1):
     
@@ -478,6 +497,31 @@ def match_phrase(input_text, _pattern):
 
     return len(count_match)
 
+def count_ep_in_season(list_of_seasons):
+    """
+    Count episodes in a season.
+    
+    Parameters
+    ----------
+    list_of_seasons - List of strings denoting seasons: ['01', '02' ...]
+    
+    Returns
+    -------
+    num_episodes - List of integers. Number of episodes in a season.
+    
+    """
+    
+    import fnmatch
+
+    season_list = list_of_seasons
+    
+    num_episodes = []
+    for season in season_list:
+
+        episodes = (len(fnmatch.filter(os.listdir(path), '{0}*.html'.format(season))))
+        num_episodes.append(episodes)
+
+    return num_episodes
 
 ##################################################
 ########### Handle the functions #################
@@ -495,7 +539,7 @@ if __name__ == "__main__":
     outdir = './output/'
     
     path = './season/'
-    filename = '1003.html'
+    filename = '0101.html'
 
     
 
@@ -504,11 +548,15 @@ if __name__ == "__main__":
 
     
     first_season = '*.html'
+    list_of_seasons = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10']
+
+    
     first_season_episodes = all_episodes(path, first_season)
     #print(first_season_episodes[0][0])
     
     #Convert html into readable text using html2text
     first_episode = convert_html_to_text(f)
+
     #print(first_episode[0:200])
     # Get txt for all episodes in a season
     all_episodes_in_a_season_txt = convert_season_html_to_text(first_season_episodes)
@@ -531,23 +579,26 @@ if __name__ == "__main__":
     store_my = []
     store_me = []
     store_sum = []
-    
+    number_of_lines = []
         
     for i, friend in enumerate(list_of_friends):
         friend_name = friend
 
     
     # Get a Friend line
-        friend, friend_clear = get_friend_line(friend_name, first_episode)
-        #print(friend_clear)
-    # Get a Friend lines for every episode in a season
-        friend_s, friend_clear_s = get_friend_line_each_ep_in_season(friend_name, all_episodes_in_a_season_txt)
+        friend, friend_clear, friend_lines = get_friend_line(friend_name, first_episode)
 
+        #gives number of characters wit space
+        #print(len(friend_clear))
+    
+    # Get a Friend lines for every episode in a season
+        friend_s, friend_clear_s, num_lines = get_friend_line_each_ep_in_season(friend_name, all_episodes_in_a_season_txt)
+        number_of_lines.append(num_lines)
     # DIFFERENT FORMATING FOR THE EPISODE
         #print(friend_s[2])
     
         words, dataframe = count_friend_words(friend_clear_s)
-        #print(words)
+
         i_count, im_count, my_count, me_count = selfish_friend_words(dataframe)
 
         df = make_word_dataframe(friend_clear_s, friend_name)
@@ -569,5 +620,15 @@ if __name__ == "__main__":
                                'SumJoey':   store_sum[3],
                                'SumPhoebe': store_sum[4],
                                'SumChandler': store_sum[5]})
-    print(df_counted)
+    
+    # Add total number of spoken lines per Friend
+    df_counted.loc[:, 'NumLinesMon'] = number_of_lines[0]
+    df_counted.loc[:, 'NumLinesRac'] = number_of_lines[1]
+    df_counted.loc[:, 'NumLinesRos'] = number_of_lines[2]
+    df_counted.loc[:, 'NumLinesJoe'] = number_of_lines[3]
+    df_counted.loc[:, 'NumLinesPho'] = number_of_lines[4]
+    df_counted.loc[:, 'NumLinesCha'] = number_of_lines[5]
 
+    #print(df_counted)
+
+    num_episodes = count_ep_in_season(list_of_seasons)
