@@ -40,16 +40,17 @@ def make_bokeh_line_plot():
 
     hover = HoverTool(
         tooltips=[
-            ("index", "Episode $index"),
-            ("episode", "@episode")
+            ("Episode", "$index"),
+            ("Title", "@episode")
         ]
     )
     
     
     
-    p = figure(plot_width=1300, plot_height=700, tools=[hover])
+    p = figure(plot_width=1300, plot_height=700, tools=[hover, "pan,wheel_zoom,box_zoom,reset"])
     p.title.text = 'Click on a Friend, Series analysis'
 
+    p.vbar(season_delim, top=num_delim, width=0.2, color='purple', legend='')   
 
     p.line('x','mon', source=source, line_width=4, color='lightgrey', 
        alpha=0.4, muted_color='#8c510a', muted_alpha=1, legend='Monica')
@@ -70,7 +71,16 @@ def make_bokeh_line_plot():
        alpha=0.4, muted_color='#b2182b', muted_alpha=1, legend='Ross')
 
 
-    p.legend.location = "top_right"
+    x_positions = [7, 29.5, 53.5, 78.5, 99.5, 123.5, 146.5, 168.5, 192.5, 211.5]
+    season_num = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    for i, each_label in enumerate(x_positions):
+        mytext = Label(x=each_label, y=0, text='Season {0}'.format(season_num[i]),
+                       border_line_color='black', border_line_alpha=0.5,text_font_size="13pt")
+        p.add_layout(mytext)   
+    
+    p.legend.orientation = "horizontal"
+    p.legend.location = "top_center"
+
     p.legend.click_policy="mute"
 
     # Define axis labels and properties
@@ -95,7 +105,13 @@ def make_bokeh_line_plot():
 ########### Handle the functions #################
 ##################################################
 
+
+
 if __name__ == "__main__":
-        
+    
+    season_delim = np.cumsum(num_episodes).tolist()
+    num_delim = [4]*10
+
+    
     make_bokeh_line_plot()
     
