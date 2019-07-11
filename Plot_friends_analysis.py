@@ -323,11 +323,12 @@ if __name__ == "__main__":
     # WordCloud
     #generate_wordcloud_bilinear(friend_clear_s[0], max_font_size)
     
-    #generate_wordcloud_friend_in_season(friend_clear_s)
+    generate_wordcloud_friend_in_season(friend_clear_s)
 
     # A Friend lines
     list_of_friends = ['**Monica:**', '**Rachel:**', '**Ross:**', '**Joey:**', '**Phoebe:**', '**Chandler:**']
-       
+
+
     for i, friend in enumerate(list_of_friends):
         friend_name = friend
     
@@ -339,10 +340,10 @@ if __name__ == "__main__":
     #friend_name = '**Chandler:**'
 
     # Get a Friend line
-        friend, friend_clear = get_friend_line(friend_name, first_episode)
+    #    friend, friend_clear, friend_lines = get_friend_line(friend_name, first_episode)
     #print(friend_clear)
     # Get a Friend lines for every episode in a season
-        friend_s, friend_clear_s = get_friend_line_each_ep_in_season(friend_name, all_episodes_in_a_season_txt)
+    #    friend_s, friend_clear_s, num_lines = get_friend_line_each_ep_in_season(friend_name, all_episodes_in_a_season_txt)
 
     # DIFFERENT FORMATING FOR THE EPISODE
     #print(friend_s[15])
