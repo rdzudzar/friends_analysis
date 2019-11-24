@@ -19,6 +19,4 @@ Sentiment_Phoebes_songs.ipynb - contains collection of Pheobes songs to create w
 
 Friends_analysis.ipynb - contains collection of Functions to performe text processing
 
-**Number of lines throughout the series**
-
-![](Friends_interactive_series.gif)
+![Number of lines throughout the series](Friends_interactive_series.gif)
