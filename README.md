@@ -18,3 +18,7 @@ correlation_plots.py - Statistics with number of lines;
 Sentiment_Phoebes_songs.ipynb - contains collection of Pheobes songs to create wordclouds and performe sentiment analysis
 
 Friends_analysis.ipynb - contains collection of Functions to performe text processing
+
+**Number of lines throughout the series**
+
+![](Friends_interactive_series.gif)
