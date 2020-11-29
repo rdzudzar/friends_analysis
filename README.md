@@ -1,6 +1,8 @@
 # friends_analysis
 Analysing ''Friends'' screenplay
 
+# Read more about the project [here](https://rdzudzar.github.io/friends_project.html)
+
 **Python files:**
 
 Friends_analysis.py - Main; Text processing and data extraction;
